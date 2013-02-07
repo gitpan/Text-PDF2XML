@@ -26,6 +26,7 @@ t/french.dehyphenated.xml
 t/french.hyphenated.xml
 t/french.pdf
 t/french.raw.xml
+t/french.skip-lowercasing.xml
 t/french.skip-pdftotext-raw.xml
 t/french.skip-pdftotext-standard.xml
 t/french.skip-pdftotext.xml
