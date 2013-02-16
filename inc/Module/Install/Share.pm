@@ -8,7 +8,7 @@ use ExtUtils::Manifest ();
 
 use vars qw{$VERSION @ISA $ISCORE};
 BEGIN {
-	$VERSION = '1.06';
+	$VERSION = '0.99';
 	@ISA     = 'Module::Install::Base';
 	$ISCORE  = 1;
 }
@@ -22,7 +22,7 @@ sub install_share {
 	}
 	unless ( defined $dir and -d $dir ) {
     		require Carp;
-		Carp::croak("Illegal or missing directory install_share param: '$dir'");
+		Carp::croak("Illegal or missing directory install_share param");
 	}
 
 	# Split by type

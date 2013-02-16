@@ -5,7 +5,7 @@
 
 =head1 NAME
 
-pdf2xml - extract texts from PDF files and put them in XML
+pdf2xml - extract texts from PDF files and put wrap in XML
 
 =head1 SYNOPSIS
 
@@ -19,6 +19,7 @@ pdf2xml - extract texts from PDF files and put them in XML
  -m ............. skip merging character sequences (not recommended)
  -r ............. skip 'pdftotext -raw' (not recommended)
  -x ............. skip standard 'pdftotext'
+ -X ............. use pdfXtk to convert to XHTML (and nothing else)
  -v ............. verbose output
 
 =head1 DESCRIPTION
@@ -52,7 +53,10 @@ De-hyphenation heuristics could also be improved. The problem is to keep it as l
 
 Apache Tika: L<http://tika.apache.org>
 
-XPDF (which includes pdftotext): L<http://www.foolabs.com/xpdf/>
+The Poppler Developers - L<http://poppler.freedesktop.org>
+
+pdfXtk L<http://sourceforge.net/projects/pdfxtk/>
+
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -70,10 +74,12 @@ use FindBin qw/$Bin/;
 use IPC::Open2;
 use XML::Parser;
 use XML::Writer;
+use File::Temp qw /tempfile/;
 
-use vars qw($opt_h $opt_L $opt_l $opt_m $opt_r $opt_x $opt_v);
+
+use vars qw($opt_h $opt_L $opt_l $opt_m $opt_r $opt_x $opt_v $opt_X);
 use Getopt::Std;
-getopts('hLl:mrxv');
+getopts('hLl:mrxXv');
 
 # home of shared data (where Apache Tika should be)
 
@@ -90,7 +96,43 @@ my $JAVA     = 'java';
 my $TIKA     = $SHARED_HOME.'/lib/tika-app-1.3.jar';
 my $PDF2TEXT = `which pdftotext`;chomp($PDF2TEXT);
 
+# we require recent versions of pdftotext developed by 
+# The Poppler Developers - http://poppler.freedesktop.org
+my $developer = `$PDF2TEXT --help 2>&1 | grep -i 'poppler'`;
+$PDF2TEXT    = undef unless ($developer=~/poppler/i);
+
 my $pdf_file = shift(@ARGV);
+
+
+##----------------------------------------------
+## -X ---> use pdfXtk to convert to HTML
+## (and do nothing special about post-processing, at least in this version ....)
+
+
+if ($opt_X){
+    my ($fh, $filename);
+    $filename = $ARGV[0];
+    unless ($filename){
+	($fh, $filename) = tempfile();
+	close $fh;
+	
+    }
+    opendir(my $dh, $SHARED_HOME.'/lib/pdfxtk') || die "can't opendir $SHARED_HOME/lib/pdfxtk: $!";
+    my @jars = grep { /\.jar/ } readdir($dh);
+    closedir $dh;
+    my $CLASSPATH = join( ':', map { $_=$SHARED_HOME.'/lib/pdfxtk/'.$_ } @jars );
+    my $pid = open2(undef, undef, 
+		    $JAVA,'-cp',$CLASSPATH,'at.ac.tuwien.dbai.pdfwrap.ProcessFile',
+		    $pdf_file,$filename);
+    waitpid( $pid, 0 );
+    unless ($ARGV[0]){
+	system('cat',$filename);
+    }
+    exit 1;
+}
+
+##----------------------------------------------
+
 
 # the vocabulary
 my %voc=();
@@ -103,7 +145,7 @@ if ($opt_l){
 # read output of 'pdftotext -raw'
 
 unless ($opt_r || ( ! -e $PDF2TEXT ) ){
-    my $pid = open2(\*OUT, undef, $PDF2TEXT,'-raw',$pdf_file,'-');
+    my $pid = open2(\*OUT, undef, $PDF2TEXT,'-raw','-enc','UTF-8',$pdf_file,'-');
     binmode(OUT,":encoding(UTF-8)");
 
     my $hyphenated=undef;
@@ -134,7 +176,7 @@ unless ($opt_r || ( ! -e $PDF2TEXT ) ){
 unless ($opt_x){
 
     my $pid = ( -e $PDF2TEXT ) ? 
-	open2(\*OUT, undef, 'pdftotext',$pdf_file,'-') :
+	open2(\*OUT, undef, 'pdftotext','-enc','UTF-8',$pdf_file,'-') :
 	open2(\*OUT, undef, 'java','-jar',$TIKA,'-x',$pdf_file);
 
     binmode(OUT,":encoding(UTF-8)");

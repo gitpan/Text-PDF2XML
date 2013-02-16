@@ -3,12 +3,11 @@ abstract: 'Convert PDF to XML'
 author:
   - 'Joerg Tiedemann'
 build_requires:
-  ExtUtils::MakeMaker: 6.36
+  ExtUtils::MakeMaker: 6.42
 configure_requires:
-  ExtUtils::MakeMaker: 6.36
+  ExtUtils::MakeMaker: 6.42
 distribution_type: module
-dynamic_config: 1
-generated_by: 'Module::Install version 1.06'
+generated_by: 'Module::Install version 0.99'
 license: gpl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -29,4 +28,4 @@ requires:
   XML::Writer: 0
 resources:
   license: http://opensource.org/licenses/gpl-license.php
-version: 0.2
+version: 0.2.1
